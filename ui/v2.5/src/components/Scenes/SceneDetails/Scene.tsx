@@ -1,4 +1,4 @@
-import { Tab, Nav, Dropdown, Button, ButtonGroup } from "react-bootstrap";
+import { Tab, Nav, Dropdown, Button, ButtonGroup, Form } from "react-bootstrap";
 import queryString from "query-string";
 import React, { useEffect, useState, useMemo } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
@@ -53,7 +53,7 @@ const ScenePage: React.FC<IProps> = ({ scene, refetch }) => {
   const [generateScreenshot] = useSceneGenerateScreenshot();
   const [timestamp, setTimestamp] = useState<number>(getInitialTimestamp());
   const [collapsed, setCollapsed] = useState(false);
-  const [showScrubber, setShowScrubber] = useState(true);
+  const [showScrubber, setShowScrubber] = useState(false);
 
   const {
     data: sceneStreams,
@@ -71,6 +71,9 @@ const ScenePage: React.FC<IProps> = ({ scene, refetch }) => {
   const [activeTabKey, setActiveTabKey] = useState("scene-details-panel");
 
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState<boolean>(false);
+  const [playNextAfterDelete, setPlayNextAfterDelete] = useState<boolean>(
+    false
+  );
   const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false);
 
   const [sceneQueue, setSceneQueue] = useState<SceneQueue>(new SceneQueue());
@@ -318,7 +321,12 @@ const ScenePage: React.FC<IProps> = ({ scene, refetch }) => {
   function onDeleteDialogClosed(deleted: boolean) {
     setIsDeleteAlertOpen(false);
     if (deleted) {
-      history.push("/scenes");
+      if (playNextAfterDelete) {
+        setPlayNextAfterDelete(false);
+        onQueueNext();
+      } else {
+        history.push("/scenes");
+      }
     }
   }
 
@@ -485,6 +493,53 @@ const ScenePage: React.FC<IProps> = ({ scene, refetch }) => {
           </ButtonGroup>
         </Nav>
       </div>
+      <div>
+        <div className="queue-controls">
+          <div>
+            <Form.Check
+              checked={continuePlaylist}
+              label={intl.formatMessage({ id: "actions.continue" })}
+              onChange={() => {
+                setContinuePlaylist(!continuePlaylist);
+              }}
+            />
+          </div>
+          <div>
+            {(currentIndex ?? 0) > 0 ? (
+              <Button
+                className="minimal"
+                variant="secondary"
+                size="lg"
+                onClick={() => onQueuePrevious()}
+              >
+                <Icon icon="step-backward" />
+              </Button>
+            ) : (
+              ""
+            )}
+            {(currentIndex ?? 0) < (queueScenes ?? []).length - 1 ? (
+              <Button
+                className="minimal"
+                variant="secondary"
+                size="lg"
+                onClick={() => onQueueNext()}
+              >
+                <Icon icon="step-forward" />
+              </Button>
+            ) : (
+              ""
+            )}
+            <Button
+              className="minimal"
+              variant="secondary"
+              size="lg"
+              onClick={() => onQueueRandom()}
+            >
+              <Icon icon="random" />
+            </Button>
+          </div>
+        </div>
+      </div>
 
       <Tab.Content>
         <Tab.Pane eventKey="scene-details-panel">
@@ -494,12 +549,7 @@ const ScenePage: React.FC<IProps> = ({ scene, refetch }) => {
           <QueueViewer
             scenes={queueScenes}
             currentID={scene.id}
-            continue={continuePlaylist}
-            setContinue={(v) => setContinuePlaylist(v)}
             onSceneClicked={(sceneID) => playScene(sceneID)}
-            onNext={onQueueNext}
-            onPrevious={onQueuePrevious}
-            onRandom={onQueueRandom}
             start={queueStart}
             hasMoreScenes={queueHasMoreScenes()}
             onLessScenes={() => onQueueLessScenes()}
@@ -537,12 +587,22 @@ const ScenePage: React.FC<IProps> = ({ scene, refetch }) => {
             isVisible={activeTabKey === "scene-edit-panel"}
             scene={scene}
             onDelete={() => setIsDeleteAlertOpen(true)}
-            onUpdate={() => refetch()}
+            onUpdate={() => {
+              console.log("Refetching!");
+              refetch();
+            }}
           />
         </Tab.Pane>
       </Tab.Content>
     </Tab.Container>
   );
+
+  const currentIndex = queueScenes?.findIndex((s) => s.id === scene.id);
+
+  const deleteAndPlayNext = () => {
+    setPlayNextAfterDelete(true);
+    setIsDeleteAlertOpen(true);
+  };
 
   // set up hotkeys
   useEffect(() => {
@@ -552,11 +612,12 @@ const ScenePage: React.FC<IProps> = ({ scene, refetch }) => {
     Mousetrap.bind("k", () => setActiveTabKey("scene-markers-panel"));
     Mousetrap.bind("i", () => setActiveTabKey("scene-file-info-panel"));
     Mousetrap.bind("o", () => onIncrementClick());
-    Mousetrap.bind("p n", () => onQueueNext());
+    Mousetrap.bind("n n", () => onQueueNext());
     Mousetrap.bind("p p", () => onQueuePrevious());
     Mousetrap.bind("p r", () => onQueueRandom());
     Mousetrap.bind(",", () => setCollapsed(!collapsed));
     Mousetrap.bind(".", () => setShowScrubber(!showScrubber));
+    Mousetrap.bind("d d", () => deleteAndPlayNext());
 
     return () => {
       Mousetrap.unbind("a");

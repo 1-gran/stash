@@ -11,13 +11,8 @@ export interface IPlaylistViewer {
   scenes?: GQL.SlimSceneDataFragment[];
   currentID?: string;
   start?: number;
-  continue?: boolean;
   hasMoreScenes: boolean;
-  setContinue: (v: boolean) => void;
   onSceneClicked: (id: string) => void;
-  onNext: () => void;
-  onPrevious: () => void;
-  onRandom: () => void;
   onMoreScenes: () => void;
   onLessScenes: () => void;
 }
@@ -26,12 +21,7 @@ export const QueueViewer: React.FC<IPlaylistViewer> = ({
   scenes,
   currentID,
   start,
-  continue: continuePlaylist = false,
   hasMoreScenes,
-  setContinue,
-  onNext,
-  onPrevious,
-  onRandom,
   onSceneClicked,
   onMoreScenes,
   onLessScenes,
@@ -39,8 +29,6 @@ export const QueueViewer: React.FC<IPlaylistViewer> = ({
   const intl = useIntl();
   const [lessLoading, setLessLoading] = useState(false);
   const [moreLoading, setMoreLoading] = useState(false);
-
-  const currentIndex = scenes?.findIndex((s) => s.id === currentID);
 
   useEffect(() => {
     setLessLoading(false);
@@ -96,48 +84,6 @@ export const QueueViewer: React.FC<IPlaylistViewer> = ({
 
   return (
     <div id="queue-viewer">
-      <div className="queue-controls">
-        <div>
-          <Form.Check
-            checked={continuePlaylist}
-            label={intl.formatMessage({ id: "actions.continue" })}
-            onChange={() => {
-              setContinue(!continuePlaylist);
-            }}
-          />
-        </div>
-        <div>
-          {(currentIndex ?? 0) > 0 ? (
-            <Button
-              className="minimal"
-              variant="secondary"
-              onClick={() => onPrevious()}
-            >
-              <Icon icon="step-backward" />
-            </Button>
-          ) : (
-            ""
-          )}
-          {(currentIndex ?? 0) < (scenes ?? []).length - 1 ? (
-            <Button
-              className="minimal"
-              variant="secondary"
-              onClick={() => onNext()}
-            >
-              <Icon icon="step-forward" />
-            </Button>
-          ) : (
-            ""
-          )}
-          <Button
-            className="minimal"
-            variant="secondary"
-            onClick={() => onRandom()}
-          >
-            <Icon icon="random" />
-          </Button>
-        </div>
-      </div>
       <div id="queue-content">
         {(start ?? 0) > 1 ? (
           <div className="d-flex justify-content-center">

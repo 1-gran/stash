@@ -75,10 +75,6 @@ export const SceneEditPanel: React.FC<IProps> = ({
   const [scrapedScene, setScrapedScene] = useState<GQL.ScrapedScene | null>();
   const [endpoint, setEndpoint] = useState<string | undefined>();
 
-  const [coverImagePreview, setCoverImagePreview] = useState<
-    string | undefined
-  >(scene.paths.screenshot ?? undefined);
-
   const { configuration: stashConfig } = React.useContext(ConfigurationContext);
 
   // Network state
@@ -121,6 +117,7 @@ export const SceneEditPanel: React.FC<IProps> = ({
     }),
     tag_ids: (scene.tags ?? []).map((t) => t.id),
     cover_image: undefined,
+    screenshot: scene.paths.screenshot ?? undefined,
     stash_ids: getStashIDs(scene.stash_ids),
   };
 
@@ -128,6 +125,7 @@ export const SceneEditPanel: React.FC<IProps> = ({
 
   const formik = useFormik({
     initialValues,
+    enableReinitialize: true,
     validationSchema: schema,
     onSubmit: (values) => onSave(getSceneInput(values)),
   });
@@ -208,9 +206,10 @@ export const SceneEditPanel: React.FC<IProps> = ({
   const imageEncoding = ImageUtils.usePasteImage(onImageLoad, true);
 
   function getSceneInput(input: InputValues): GQL.SceneUpdateInput {
+    const { screenshot, ...rest } = input;
     return {
       id: scene.id,
-      ...input,
+      ...rest,
     };
   }
 
@@ -280,8 +279,8 @@ export const SceneEditPanel: React.FC<IProps> = ({
   }
 
   function onImageLoad(imageData: string) {
-    setCoverImagePreview(imageData);
     formik.setFieldValue("cover_image", imageData);
+    formik.setFieldValue("screenshot", imageData);
   }
 
   function onCoverImageChange(event: React.FormEvent<HTMLInputElement>) {
@@ -567,7 +566,7 @@ export const SceneEditPanel: React.FC<IProps> = ({
     if (updatedScene.image) {
       // image is a base64 string
       formik.setFieldValue("cover_image", updatedScene.image);
-      setCoverImagePreview(updatedScene.image);
+      formik.setFieldValue("screenshot", updatedScene.image);
     }
 
     if (updatedScene.remote_site_id && endpoint) {
@@ -883,7 +882,7 @@ export const SceneEditPanel: React.FC<IProps> = ({
                 ) : (
                   <img
                     className="scene-cover"
-                    src={coverImagePreview}
+                    src={formik.values.screenshot}
                     alt={intl.formatMessage({ id: "cover_image" })}
                   />
                 )}

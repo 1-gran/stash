@@ -561,14 +561,14 @@ input[type="range"].blue-slider {
   padding-right: 0.25rem;
 }
 
-#queue-viewer {
-  .queue-controls {
-    align-items: center;
-    display: flex;
-    flex: 0 1 auto;
-    justify-content: space-between;
-  }
+.queue-controls {
+  align-items: center;
+  display: flex;
+  flex: 0 1 auto;
+  justify-content: space-between;
+}
 
+#queue-viewer {
   .thumbnail-container {
     height: 50px;
     margin-bottom: 5px;
