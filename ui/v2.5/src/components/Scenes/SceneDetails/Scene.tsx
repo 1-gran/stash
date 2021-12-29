@@ -534,6 +534,7 @@ const ScenePage: React.FC<IProps> = ({ scene, refetch }) => {
         </Tab.Pane>
         <Tab.Pane eventKey="scene-edit-panel">
           <SceneEditPanel
+            key={scene.id}
             isVisible={activeTabKey === "scene-edit-panel"}
             scene={scene}
             onDelete={() => setIsDeleteAlertOpen(true)}
