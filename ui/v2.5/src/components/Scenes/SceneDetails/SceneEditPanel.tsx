@@ -75,9 +75,7 @@ export const SceneEditPanel: React.FC<IProps> = ({
   const [scrapedScene, setScrapedScene] = useState<GQL.ScrapedScene | null>();
   const [endpoint, setEndpoint] = useState<string | undefined>();
 
-  const [coverImagePreview, setCoverImagePreview] = useState<
-    string | undefined
-  >(scene.paths.screenshot ?? undefined);
+  const [coverImagePreview, setCoverImagePreview] = useState<string | null>();
 
   const { configuration: stashConfig } = React.useContext(ConfigurationContext);
 
@@ -148,6 +146,11 @@ export const SceneEditPanel: React.FC<IProps> = ({
       items.map((i) => i.id)
     );
   }
+
+  useEffect(() => {
+    // Ensure form re-render on scene change
+    formik.resetForm({values: initialValues})
+  }, [scene.id])
 
   useEffect(() => {
     if (isVisible) {
@@ -249,6 +252,7 @@ export const SceneEditPanel: React.FC<IProps> = ({
             { entity: intl.formatMessage({ id: "scene" }).toLocaleLowerCase() }
           ),
         });
+        setCoverImagePreview(null);
         // clear the cover image so that it doesn't appear dirty
         formik.resetForm({ values: formik.values });
       }
@@ -883,7 +887,7 @@ export const SceneEditPanel: React.FC<IProps> = ({
                 ) : (
                   <img
                     className="scene-cover"
-                    src={coverImagePreview}
+                    src={coverImagePreview || (scene.paths.screenshot ?? "")}
                     alt={intl.formatMessage({ id: "cover_image" })}
                   />
                 )}
